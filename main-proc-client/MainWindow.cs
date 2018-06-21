@@ -44,7 +44,10 @@ namespace main_proc_client
 
         private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (e.CloseReason == CloseReason.UserClosing && rtbLogWindow.Text.Length > 0)
+            bool Reason = e.CloseReason == CloseReason.UserClosing;
+            bool Length = rtbLogWindow.Text.Length > 0;
+
+            if (Reason && Length)
             {
                 var result = MessageBox.Show(
                     "Do you want to save application .log file?", 
@@ -75,7 +78,7 @@ namespace main_proc_client
         private void BSendMessage_Click(object sender, EventArgs e)
         {
             // Create separate thread for sending messages
-            new Thread(() =>
+            var ButtonHandlerThread = new Thread(() =>
             {
                 try
                 {
@@ -113,14 +116,16 @@ namespace main_proc_client
                     // Change text of button
                     setCTextInvoke(bSubmit, "Connect");
                 }
-            }).Start();
+            });
+            ButtonHandlerThread.IsBackground = true;
+            ButtonHandlerThread.Start();
         }
 
-        private void BSubmit_Click(object sender, System.EventArgs e)
+        private void BSubmit_Click(object sender, EventArgs e)
         {
             // Start new thread 
             // and connect/disconnect pipe
-            new Thread(() => 
+            var ButtonHandlerThread = new Thread(() =>
             {
                 // Disable button so client can't
                 // interrupt operations
@@ -182,7 +187,9 @@ namespace main_proc_client
                 // Re-enable button
                 setCEnabledInvoke(bSubmit, true);
                 setCEnabledInvoke(tbPipeName, true);
-            }).Start();
+            });
+            ButtonHandlerThread.IsBackground = true;
+            ButtonHandlerThread.Start();
         }
     }
 }
