@@ -13,18 +13,12 @@ namespace main_proc_client
         volatile string pipeName = null;
         volatile bool isConnectedToPipe = false;
 
-        private void logToWindow(string message)
-        {
-            // Append new logged event
-            rtbLogWindow.Text += $"{DateTime.Now.ToLocalTime()} <=> {message}\n";
-        }
-
-        private void logToWindowInvoke(string message)
+        private void LogToWindow(string info)
         {
             rtbLogWindow.Invoke((MethodInvoker)(() =>
             {
-                // Append new logged event
-                rtbLogWindow.Text += $"{DateTime.Now.ToLocalTime()} <=> {message}\n";
+                rtbLogWindow.AppendText($"\r\n{DateTime.Now.ToLocalTime()} <=> {info}");
+                rtbLogWindow.ScrollToCaret();
             }));
         }
 
@@ -45,7 +39,7 @@ namespace main_proc_client
             // Create event handlers
             bSubmit.Click += BSubmit_Click;
             bSendMessage.Click += BSendMessage_Click;
-            this.FormClosing += MainWindow_FormClosing;
+            FormClosing += MainWindow_FormClosing;
         }
 
         private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
@@ -95,16 +89,16 @@ namespace main_proc_client
                         namedPipe.Write(bBuffer, 0, bBufferCount);
 
                         // Add new entry to log
-                        logToWindowInvoke($"Client sent message: {message}");
+                        LogToWindow($"Client sent message: {message};");
                     }
                 }
                 catch (ArgumentException)
                 {
-                    logToWindowInvoke("Message buffer failed");
+                    LogToWindow("Message buffer failed;");
                 }
                 catch (Exception)
                 {
-                    logToWindowInvoke($"Client lost connection to [{pipeName}]");
+                    LogToWindow($"Client lost connection to [{pipeName}];");
 
                     isConnectedToPipe = false;
                     setCEnabledInvoke(bSendMessage, false);
@@ -130,6 +124,7 @@ namespace main_proc_client
             {
                 // Disable button so client can't
                 // interrupt operations
+                setCEnabledInvoke(tbPipeName, false);
                 setCEnabledInvoke(bSubmit, false);
 
                 // Connect/Disconnect client
@@ -150,7 +145,7 @@ namespace main_proc_client
                     setCTextInvoke(bSubmit, "Connect");
 
                     // Add new entry to log
-                    logToWindowInvoke($"Client disconnected from pipe [{pipeName}]");
+                    LogToWindow($"Client disconnected from pipe [{pipeName}];");
                 }
                 else
                 {
@@ -165,7 +160,7 @@ namespace main_proc_client
                         try
                         {
                             namedPipe.Connect(5000);
-                            logToWindowInvoke($"Client connected to pipe [{pipeName}]");
+                            LogToWindow($"Client connected to pipe [{pipeName}];");
 
                             // Unblock message section
                             isConnectedToPipe = true;
@@ -177,15 +172,16 @@ namespace main_proc_client
                         }
                         catch (Exception)
                         {
-                            logToWindowInvoke($"Failed to connect to pipe [{pipeName}]");
+                            LogToWindow($"Failed to connect to pipe [{pipeName}];");
                         }
                     }
                     else
-                        logToWindowInvoke("Pipe name can't be empty string");
+                        LogToWindow("Pipe name can't be empty string;");
                 }
 
                 // Re-enable button
                 setCEnabledInvoke(bSubmit, true);
+                setCEnabledInvoke(tbPipeName, true);
             }).Start();
         }
     }
