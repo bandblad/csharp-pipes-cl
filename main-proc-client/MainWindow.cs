@@ -13,15 +13,6 @@ namespace main_proc_client
         volatile string pipeName = null;
         volatile bool isConnectedToPipe = false;
 
-        private void LogToWindow(string info)
-        {
-            rtbLogWindow.Invoke((MethodInvoker)(() =>
-            {
-                rtbLogWindow.AppendText($"\r\n{DateTime.Now.ToLocalTime()} <=> {info}");
-                rtbLogWindow.ScrollToCaret();
-            }));
-        }
-
         private void setCTextInvoke(Control target, string arg)
         {
             target.Invoke((MethodInvoker)(() => target.Text = arg));
@@ -35,6 +26,8 @@ namespace main_proc_client
         public MainWindow()
         {
             InitializeComponent();
+
+            LoggerSingletone.Begin(rtbLogWindow);
 
             // Create event handlers
             bSubmit.Click += BSubmit_Click;
@@ -92,16 +85,16 @@ namespace main_proc_client
                         namedPipe.Write(bBuffer, 0, bBufferCount);
 
                         // Add new entry to log
-                        LogToWindow($"Client sent message: {message};");
+                        LoggerSingletone.WriteLineMutexed($"Client sent message: {message};");
                     }
                 }
                 catch (ArgumentException)
                 {
-                    LogToWindow("Message buffer failed;");
+                    LoggerSingletone.WriteLineMutexed("Message buffer failed;");
                 }
                 catch (Exception)
                 {
-                    LogToWindow($"Client lost connection to [{pipeName}];");
+                    LoggerSingletone.WriteLineMutexed($"Client lost connection to [{pipeName}];");
 
                     isConnectedToPipe = false;
                     setCEnabledInvoke(bSendMessage, false);
@@ -150,7 +143,7 @@ namespace main_proc_client
                     setCTextInvoke(bSubmit, "Connect");
 
                     // Add new entry to log
-                    LogToWindow($"Client disconnected from pipe [{pipeName}];");
+                    LoggerSingletone.WriteLineMutexed($"Client disconnected from pipe [{pipeName}];");
                 }
                 else
                 {
@@ -165,7 +158,7 @@ namespace main_proc_client
                         try
                         {
                             namedPipe.Connect(5000);
-                            LogToWindow($"Client connected to pipe [{pipeName}];");
+                            LoggerSingletone.WriteLineMutexed($"Client connected to pipe [{pipeName}];");
 
                             // Unblock message section
                             isConnectedToPipe = true;
@@ -177,11 +170,11 @@ namespace main_proc_client
                         }
                         catch (Exception)
                         {
-                            LogToWindow($"Failed to connect to pipe [{pipeName}];");
+                            LoggerSingletone.WriteLineMutexed($"Failed to connect to pipe [{pipeName}];");
                         }
                     }
                     else
-                        LogToWindow("Pipe name can't be empty string;");
+                        LoggerSingletone.WriteLineMutexed("Pipe name can't be empty string;");
                 }
 
                 // Re-enable button
